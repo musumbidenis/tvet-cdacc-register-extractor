@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.spec.bak
+
+# PyInstaller build output (keep the .spec, ignore the binaries)
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Temp / test PDFs (don't commit sensitive register PDFs)
+*.pdf
+
+# Excel outputs
+*_extracted.xlsx
+*_roster.xlsx
+
+# Claude
+.claude/
