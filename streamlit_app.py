@@ -27,31 +27,166 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Custom styling ─────────────────────────────────────────────────────────────
+# ── Hide Streamlit chrome (menu, footer, deploy button) ───────────────────────
+# Also wire up system dark/light theme for custom elements
 st.markdown("""
 <style>
-    /* Tighten top padding */
-    .block-container { padding-top: 1.8rem; padding-bottom: 1rem; }
+/* ── Hide Streamlit chrome ─────────────────────────────── */
+#MainMenu            { display: none !important; }
+footer               { display: none !important; }
+[data-testid="stDeployButton"]       { display: none !important; }
+[data-testid="stToolbar"]            { display: none !important; }
+[data-testid="stDecoration"]         { display: none !important; }
 
-    /* Metric card tweaks */
+/* ── Layout ────────────────────────────────────────────── */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1100px;
+}
+
+/* ── App header banner ──────────────────────────────────── */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #1B7A48 0%, #29A861 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(41,168,97,0.25);
+}
+.app-header .icon { font-size: 2.1rem; line-height: 1; }
+.app-header h1 {
+    margin: 0; padding: 0;
+    font-size: 1.45rem; font-weight: 700; letter-spacing: -0.3px;
+    color: #fff;
+}
+.app-header p {
+    margin: 2px 0 0; padding: 0;
+    font-size: 0.82rem; opacity: 0.85; color: #fff;
+}
+
+/* ── Info cards ──────────────────────────────────────────── */
+.info-card {
+    border-radius: 10px;
+    padding: 14px 18px;
+    min-height: 76px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #F8FAFB;
+}
+.info-card .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #6B7280;
+    margin-bottom: 5px;
+}
+.info-card .value {
+    font-size: 0.97rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.35;
+}
+
+/* ── Metric cards ──────────────────────────────────────── */
+[data-testid="stMetric"] {
+    background: #F8FAFB;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 16px 18px 12px;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #6B7280 !important;
+}
+[data-testid="stMetricValue"] {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+}
+
+/* ── Export cards ────────────────────────────────────────── */
+.export-card {
+    border-radius: 12px;
+    padding: 20px 22px 18px;
+    border: 1px solid rgba(0,0,0,0.09);
+    background: #F8FAFB;
+    height: 100%;
+}
+.export-card h4 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+.export-card p {
+    margin: 0 0 16px;
+    font-size: 0.79rem;
+    color: #6B7280;
+    line-height: 1.45;
+}
+
+/* ── Download buttons ────────────────────────────────────── */
+.stDownloadButton > button {
+    width: 100% !important;
+    font-weight: 600 !important;
+    border-radius: 7px !important;
+    padding: 0.45rem 1rem !important;
+}
+
+/* ── Section divider label ───────────────────────────────── */
+.section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: #6B7280;
+    margin: 0 0 10px;
+}
+
+/* ── Upload zone ─────────────────────────────────────────── */
+[data-testid="stFileUploader"] {
+    border-radius: 10px;
+}
+
+/* ── Status / progress tweaks ────────────────────────────── */
+[data-testid="stStatusWidget"] {
+    border-radius: 10px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DARK MODE overrides  (system preference)
+════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .info-card {
+        background: #1E2530;
+        border-color: rgba(255,255,255,0.08);
+    }
+    .info-card .label  { color: #9CA3AF; }
+    .info-card .value  { color: #F3F4F6; }
+
+    .export-card {
+        background: #1E2530;
+        border-color: rgba(255,255,255,0.08);
+    }
+    .export-card h4    { color: #F3F4F6; }
+    .export-card p     { color: #9CA3AF; }
+
     [data-testid="stMetric"] {
-        background: #F8F9FA;
-        border: 1px solid #E9ECEF;
-        border-radius: 8px;
-        padding: 14px 18px 10px;
+        background: #1E2530;
+        border-color: rgba(255,255,255,0.08);
     }
-    [data-testid="stMetricLabel"] { font-size: 0.78rem; color: #6C757D; }
-    [data-testid="stMetricValue"] { font-size: 1.9rem; font-weight: 700; }
+    [data-testid="stMetricLabel"] { color: #9CA3AF !important; }
+    [data-testid="stMetricValue"] { color: #F3F4F6 !important; }
 
-    /* Download buttons */
-    .stDownloadButton > button {
-        width: 100%;
-        font-weight: 600;
-        border-radius: 6px;
-    }
-
-    /* Section headings */
-    h4 { margin-bottom: 4px !important; }
+    .section-label { color: #9CA3AF; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,7 +194,6 @@ st.markdown("""
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _tmp_path(suffix: str) -> str:
-    """Create an empty named temp file and return its path (already closed)."""
     fd, path = tempfile.mkstemp(suffix=suffix)
     os.close(fd)
     return path
@@ -110,9 +244,26 @@ def _course_label(cn: str, cl: str) -> str:
     return f"{cn}  {cl}" if cl.lower().startswith("level") else f"{cn}  Level {cl}"
 
 
-# ── Header ────────────────────────────────────────────────────────────────────
-st.markdown("## 📋 TVET CDACC Register Extractor")
-st.divider()
+def _info_card(label: str, value: str) -> str:
+    safe = value.replace("\n", "<br>") if value else "—"
+    return (
+        f'<div class="info-card">'
+        f'<div class="label">{label}</div>'
+        f'<div class="value">{safe}</div>'
+        f'</div>'
+    )
+
+
+# ── App header ────────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="app-header">
+  <div class="icon">📋</div>
+  <div>
+    <h1>TVET CDACC Register Extractor</h1>
+    <p>Extract candidates, units &amp; rosters from assessment registration PDFs</p>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ── File uploader ─────────────────────────────────────────────────────────────
 uploaded = st.file_uploader(
@@ -123,14 +274,13 @@ uploaded = st.file_uploader(
 )
 
 if not uploaded:
-    st.info("👆  Upload a TVET CDACC assessment register PDF to begin.", icon="📂")
+    st.info("Upload a TVET CDACC assessment register PDF to get started.", icon="📂")
     st.stop()
 
 # ── Extract (only when file changes) ─────────────────────────────────────────
 if (st.session_state.get("pdf_name") != uploaded.name
         or "data" not in st.session_state):
 
-    # Write uploaded bytes to a temp file (pdfplumber needs a path)
     tmp_pdf = _tmp_path(".pdf")
     try:
         with open(tmp_pdf, "wb") as f:
@@ -151,7 +301,7 @@ if (st.session_state.get("pdf_name") != uploaded.name
                 st.write(f"{_icons.get(level, '·')}  {msg}")
 
             def on_progress(cur: int, total: int):
-                prog.progress(cur / total, text=f"Page {cur} / {total}")
+                prog.progress(cur / total, text=f"Page {cur} of {total}")
 
             data = extract(tmp_pdf, on_log=on_log, on_progress=on_progress)
             prog.progress(1.0, text="Complete ✓")
@@ -161,7 +311,6 @@ if (st.session_state.get("pdf_name") != uploaded.name
                 expanded=False,
             )
 
-        # Store in session; clear any previously cached export bytes
         st.session_state.data     = data
         st.session_state.pdf_name = uploaded.name
         for key in list(st.session_state.keys()):
@@ -175,31 +324,40 @@ if (st.session_state.get("pdf_name") != uploaded.name
         if os.path.exists(tmp_pdf):
             os.unlink(tmp_pdf)
 
+
 data = st.session_state.data
 stem = os.path.splitext(uploaded.name)[0]
 
 # ── Info panel ────────────────────────────────────────────────────────────────
-st.subheader("Extracted Information")
-
-c1, c2, c3, c4 = st.columns(4)
-c1.markdown(f"**Centre Name**  \n{data.get('centre_name') or '—'}")
-c2.markdown(f"**Centre Code**  \n{data.get('centre_code') or '—'}")
+st.markdown('<p class="section-label">Register Details</p>', unsafe_allow_html=True)
 
 seen_courses = list(dict.fromkeys(
     (u.get("course_name", ""), u.get("course_level", ""))
     for u in data["units"]
     if u.get("course_name", "")
 ))
-courses_text = "  \n".join(
+courses_text = "\n".join(
     _course_label(cn, cl) for cn, cl in seen_courses
 ) or "—"
 
-c3.markdown(f"**Course(s)**  \n{courses_text}")
-c4.markdown(f"**Exam Series**  \n{data.get('series') or '—'}")
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    st.markdown(_info_card("Centre Name", data.get("centre_name") or "—"),
+                unsafe_allow_html=True)
+with c2:
+    st.markdown(_info_card("Centre Code", data.get("centre_code") or "—"),
+                unsafe_allow_html=True)
+with c3:
+    st.markdown(_info_card("Course(s)", courses_text), unsafe_allow_html=True)
+with c4:
+    st.markdown(_info_card("Exam Series", data.get("series") or "—"),
+                unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
+st.markdown('<p class="section-label">Summary</p>', unsafe_allow_html=True)
+
 roster   = build_roster(data)
 total    = sum(u["candidate_count"] for u in data["units"])
 assess   = sum(
@@ -209,23 +367,27 @@ assess   = sum(
 reassess = total - assess
 
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Units",                 data["unit_count"])
-m2.metric("Unique Candidates",     len(roster))
-m3.metric("Total Registrations",   total)
-m4.metric("Assessment",            assess)
-m5.metric("Re-Assessment",         reassess)
+m1.metric("Units",               data["unit_count"])
+m2.metric("Unique Candidates",   len(roster))
+m3.metric("Total Registrations", total)
+m4.metric("Assessment",          assess)
+m5.metric("Re-Assessment",       reassess)
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Export ────────────────────────────────────────────────────────────────────
-st.subheader("Export")
+st.markdown('<p class="section-label">Export</p>', unsafe_allow_html=True)
 
-ex_col, roster_col, summary_col = st.columns([1, 1.8, 1], gap="large")
+ex_col, roster_col, summary_col = st.columns([1, 1.7, 1], gap="large")
 
 # ── Excel Workbook ────────────────────────────────────────────────────────────
 with ex_col:
-    st.markdown("#### 📊 Excel Workbook")
-    st.caption("All candidates, units, and roster — one workbook, three sheets.")
+    st.markdown("""
+    <div class="export-card">
+      <h4>📊 Excel Workbook</h4>
+      <p>All candidates, units, and roster — one workbook, three sheets.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     _xk = "_cache_excel"
     if _xk not in st.session_state:
@@ -243,8 +405,12 @@ with ex_col:
 
 # ── Roster PDF ────────────────────────────────────────────────────────────────
 with roster_col:
-    st.markdown("#### 📄 Roster PDF")
-    st.caption("Landscape A4 attendance roster with signature column.")
+    st.markdown("""
+    <div class="export-card">
+      <h4>📄 Roster PDF</h4>
+      <p>Landscape A4 attendance roster with candidate list and signature column.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     has_assess   = any(
         (u.get("report_type") or "").lower().startswith("assessment")
@@ -262,8 +428,10 @@ with roster_col:
         rt_options["Re-Assessment only"] = "Re-Assessment Registrations"
 
     rt_label = st.radio(
-        "Report type", list(rt_options.keys()),
-        horizontal=True, key="roster_rt",
+        "Report type",
+        list(rt_options.keys()),
+        horizontal=True,
+        key="roster_rt",
     )
     report_type_filter = rt_options[rt_label]
 
@@ -287,7 +455,6 @@ with roster_col:
             else [course_map[lbl] for lbl in sel_labels]
         )
 
-        # Cache key encodes the filter state
         _rk = f"_cache_roster_{rt_label}_{'|'.join(sorted(sel_labels))}"
         if _rk not in st.session_state:
             with st.spinner("Building roster PDF…"):
@@ -295,7 +462,7 @@ with roster_col:
                     data, course_filter, report_type_filter
                 )
 
-        _slug = ("all"          if not report_type_filter
+        _slug = ("all"           if not report_type_filter
                  else "assessment" if "assessment" in report_type_filter.lower()
                  else "reassessment")
         st.download_button(
@@ -309,8 +476,12 @@ with roster_col:
 
 # ── Summary PDF ───────────────────────────────────────────────────────────────
 with summary_col:
-    st.markdown("#### 📋 Summary PDF")
-    st.caption("Portrait A4 — statistics and full unit breakdown.")
+    st.markdown("""
+    <div class="export-card">
+      <h4>📋 Summary PDF</h4>
+      <p>Portrait A4 — statistics and full unit breakdown.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     _sk = "_cache_summary"
     if _sk not in st.session_state:

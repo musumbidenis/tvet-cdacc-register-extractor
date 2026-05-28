@@ -1,0 +1,6 @@
+[theme]
+primaryColor     = "#29A861"
+# No base key → Streamlit follows the OS/browser light-or-dark preference
+
+[browser]
+gatherUsageStats = false
