@@ -55,11 +55,17 @@ BORDER_C = colors.HexColor("#BBBBBB")
 NAVY     = colors.Color(0.094, 0.322, 0.498)       # dark header for summary
 
 # ── B&W / print-mode colours  (used when bw=True) ────────────────────────────
-BW_HDR    = colors.HexColor("#1C1C1C")   # replaces GREEN fills (header bar + col headers)
-BW_SEP    = colors.HexColor("#DEDEDE")   # separator rows in summary (replaces green-tinted)
-BW_ALT    = colors.HexColor("#EBEBEB")   # alternating data rows (more visible when printed)
-BW_TOTAL  = colors.HexColor("#C8C8C8")   # total row background
-BW_BORDER = colors.HexColor("#888888")   # box / grid borders (darker = more visible on print)
+# Design principle: NO large dark fills — structure comes from borders + bold
+# text only.  A solid dark header on every page wastes a full cartridge worth
+# of ink; these values produce a clean, legible document at a fraction of the
+# toner cost.
+BW_HDR     = colors.HexColor("#EBEBEB")   # light gray: replaces GREEN page-header fill
+BW_HDR_TXT = colors.HexColor("#000000")   # black text on light header (vs white on green)
+BW_COL_H   = colors.HexColor("#D4D4D4")   # table column-header row (slightly darker than BW_HDR)
+BW_SEP     = colors.HexColor("#E4E4E4")   # course-group separator rows
+BW_ALT     = colors.HexColor("#F5F5F5")   # alternating data rows (barely-there tint)
+BW_TOTAL   = colors.HexColor("#D8D8D8")   # totals row
+BW_BORDER  = colors.HexColor("#606060")   # grid / box borders (crisp on any printer)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -70,6 +76,12 @@ _COL_HDR = ParagraphStyle(
     "col_hdr",
     fontName=_FB, fontSize=9.5, leading=13,
     textColor=WHITE, alignment=TA_CENTER,
+)
+# B&W variant: black text on light gray column-header background
+_COL_HDR_BW = ParagraphStyle(
+    "col_hdr_bw",
+    fontName=_FB, fontSize=9.5, leading=13,
+    textColor=BLACK, alignment=TA_CENTER,
 )
 _CELL = ParagraphStyle(
     "cell",
@@ -173,18 +185,20 @@ _L_FRAME_H = (_L_PAGE[1]
 _L_CM   = [12, 57, 50, 20, 88, 42]   # mm;  Σ = 269 mm
 _L_COLS = [c * mm for c in _L_CM]
 
-def _roster_col_header_row() -> list:
+def _roster_col_header_row(style=None) -> list:
+    s = style if style is not None else _COL_HDR
     labels = ["S/N", "REG NO", "CANDIDATE NAME", "UNITS", "UNIT NAME(S)", "SIGNATURE"]
-    return [Paragraph(lbl, _COL_HDR) for lbl in labels]
+    return [Paragraph(lbl, s) for lbl in labels]
 
 
 def _roster_data_table(entries: list,
                         header_color=None,
-                        border_color=None) -> Table:
+                        border_color=None,
+                        col_hdr_style=None) -> Table:
     _hdr = header_color if header_color is not None else GREEN
     _brd = border_color if border_color is not None else BORDER_C
 
-    rows    = [_roster_col_header_row()]
+    rows    = [_roster_col_header_row(style=col_hdr_style)]
     row_hts = [None]
 
     for sn, (reg, info) in enumerate(entries, start=1):
@@ -224,7 +238,7 @@ _INST_DEPT = "ICT DEPARTMENT"
 
 
 def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str = "",
-                          header_color=None):
+                          header_color=None, hdr_text=None):
     """Return the onPage callback that draws the header on the first page
     of each course group only.
 
@@ -232,8 +246,12 @@ def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str =
              bottom: Centre Code: {code}
     Right — top:    CDACC EXAM REGISTRATION(S)
              bottom: course name for this specific group
+
+    hdr_text: text colour inside the header bar.
+              Defaults to WHITE (colour mode); pass BW_HDR_TXT for B&W mode.
     """
     _hdr  = header_color if header_color is not None else GREEN
+    _htxt = hdr_text     if hdr_text     is not None else WHITE
     _pad  = 5 * mm
     _gap  = 6 * mm
     _half = _L_W / 2 - _pad - _gap / 2
@@ -247,9 +265,15 @@ def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str =
         canvas.setFillColor(_hdr)
         canvas.rect(_L_MARGIN, rect_bottom, _L_W, _L_HEADER_H, fill=1, stroke=0)
 
+        # B&W mode: draw a crisp bottom rule to separate header from body
+        if hdr_text is not None:
+            canvas.setStrokeColor(BW_BORDER)
+            canvas.setLineWidth(1.2)
+            canvas.line(_L_MARGIN, rect_bottom, _L_MARGIN + _L_W, rect_bottom)
+
         y1 = _L_PAGE[1] - _L_TOP_PAD - 8  * mm
         y2 = _L_PAGE[1] - _L_TOP_PAD - 16 * mm
-        canvas.setFillColor(WHITE)
+        canvas.setFillColor(_htxt)
 
         x_left  = _L_MARGIN + _pad
         x_right = _L_MARGIN + _L_W - _pad
@@ -292,8 +316,11 @@ def build_roster_pdf(data: dict, path: str,
                         "Re-Assessment Registrations" → filter by report type
     bw                : True → greyscale / print-friendly version
     """
-    _hdr = BW_HDR    if bw else GREEN
-    _brd = BW_BORDER if bw else BORDER_C
+    _hdr      = BW_HDR      if bw else GREEN
+    _htxt     = BW_HDR_TXT  if bw else None       # None → page-fn defaults to WHITE
+    _col_h    = _COL_HDR_BW if bw else None        # None → _roster_data_table defaults to _COL_HDR
+    _col_hbg  = BW_COL_H    if bw else None        # column-header row background
+    _brd      = BW_BORDER   if bw else BORDER_C
     # Apply report-type filter on units before building roster
     working_data = data
     if report_type_filter:
@@ -349,7 +376,7 @@ def build_roster_pdf(data: dict, path: str,
     for i, ((cname, clevel), _entries) in enumerate(groups):
         course_lbl = _fmt_course(cname, clevel)
         page_fn    = _make_roster_page_fn(course_lbl, centre_name, centre_code,
-                                          header_color=_hdr)
+                                          header_color=_hdr, hdr_text=_htxt)
 
         frame_first = Frame(
             _L_FRAME_X, _L_FRAME_Y, _L_FRAME_W, _L_FRAME_H,
@@ -372,7 +399,7 @@ def build_roster_pdf(data: dict, path: str,
     if not page_templates:
         fb_fn = _make_roster_page_fn(
             data.get("course_name") or "Assessment Register", centre_name, centre_code,
-            header_color=_hdr)
+            header_color=_hdr, hdr_text=_htxt)
         page_templates.append(PageTemplate(
             id="course_0", pagesize=_L_PAGE,
             frames=Frame(_L_FRAME_X, _L_FRAME_Y, _L_FRAME_W, _L_FRAME_H,
@@ -395,7 +422,8 @@ def build_roster_pdf(data: dict, path: str,
         story.append(NextPageTemplate(f"course_{i}_cont"))
         # Sort candidates by registration number
         entries_sorted = sorted(entries, key=lambda x: x[0])
-        tbl = _roster_data_table(entries_sorted, header_color=_hdr, border_color=_brd)
+        tbl = _roster_data_table(entries_sorted, header_color=_col_hbg,
+                                 border_color=_brd, col_hdr_style=_col_h)
         story.append(tbl)
 
     # ── Document ──────────────────────────────────────────────────────────────
@@ -460,6 +488,12 @@ _SM_COL_H = ParagraphStyle(
     fontName=_FB, fontSize=7, leading=9,
     textColor=WHITE, alignment=TA_CENTER,
 )
+# B&W variant: black text on light gray column-header background
+_SM_COL_H_BW = ParagraphStyle(
+    "sm_col_h_bw",
+    fontName=_FB, fontSize=7, leading=9,
+    textColor=BLACK, alignment=TA_CENTER,
+)
 _SM_CELL = ParagraphStyle(
     "sm_cell",
     fontName=_F, fontSize=9, leading=12,
@@ -483,14 +517,18 @@ _SM_CELL_TOTAL_N = ParagraphStyle(
 
 
 def _make_summary_page_fn(centre_name: str, centre_code: str, series: str = "",
-                           header_color=None):
+                           header_color=None, hdr_text=None):
     """Return the onPage callback that draws the header on the first
     summary page only.
 
     Top row  — centre name, centred across full width, bold, dynamic font (max 13)
     Bottom row — Centre Code (left) | series (right)
+
+    hdr_text: text colour inside the header bar.
+              Defaults to WHITE (colour mode); pass BW_HDR_TXT for B&W mode.
     """
     _hdr       = header_color if header_color is not None else GREEN
+    _htxt      = hdr_text     if hdr_text     is not None else WHITE
     _pad       = 5 * mm
     _gap       = 6 * mm
     _half      = _P_W / 2 - _pad - _gap / 2
@@ -507,9 +545,15 @@ def _make_summary_page_fn(centre_name: str, centre_code: str, series: str = "",
         canvas.setFillColor(_hdr)
         canvas.rect(_P_MARGIN, rect_bottom, _P_W, _P_HEADER_H, fill=1, stroke=0)
 
+        # B&W mode: draw a crisp bottom rule to separate header from body
+        if hdr_text is not None:
+            canvas.setStrokeColor(BW_BORDER)
+            canvas.setLineWidth(1.2)
+            canvas.line(_P_MARGIN, rect_bottom, _P_MARGIN + _P_W, rect_bottom)
+
         y1 = _P_PAGE[1] - _P_TOP_PAD - 8  * mm
         y2 = _P_PAGE[1] - _P_TOP_PAD - 16 * mm
-        canvas.setFillColor(WHITE)
+        canvas.setFillColor(_htxt)
 
         x_left  = _P_MARGIN + _pad
         x_right = _P_MARGIN + _P_W - _pad
@@ -565,11 +609,14 @@ def build_summary_pdf(data: dict, path: str, bw: bool = False) -> str:
     ----------
     bw : True → greyscale / print-friendly version
     """
-    _hdr   = BW_HDR    if bw else GREEN
-    _sep   = BW_SEP    if bw else colors.Color(0.93, 0.97, 0.94)
-    _alt   = BW_ALT    if bw else LTGRAY
-    _total = BW_TOTAL  if bw else LTGRAY
-    _brd   = BW_BORDER if bw else BORDER_C
+    _hdr    = BW_COL_H   if bw else GREEN                     # table column-header row bg
+    _htxt   = BW_HDR_TXT if bw else None                      # None → page-fn defaults to WHITE
+    _pg_hdr = BW_HDR     if bw else GREEN                     # page-level header bar fill
+    _sep    = BW_SEP     if bw else colors.Color(0.93, 0.97, 0.94)
+    _alt    = BW_ALT     if bw else LTGRAY
+    _total  = BW_TOTAL   if bw else LTGRAY
+    _brd    = BW_BORDER  if bw else BORDER_C
+    _col_hs = _SM_COL_H_BW if bw else _SM_COL_H              # column-header text style
 
     roster     = build_roster(data)
     all_units  = data["units"]
@@ -644,10 +691,10 @@ def build_summary_pdf(data: dict, path: str, bw: bool = False) -> str:
     un_w  = _P_W - uc_w - rt_w - cnt_w
 
     unit_rows = [[
-        Paragraph("UNIT CODE",    _SM_COL_H),
-        Paragraph("UNIT NAME",    _SM_COL_H),
-        Paragraph("REPORT TYPE",  _SM_COL_H),
-        Paragraph("CANDIDATES",   _SM_COL_H),
+        Paragraph("UNIT CODE",    _col_hs),
+        Paragraph("UNIT NAME",    _col_hs),
+        Paragraph("REPORT TYPE",  _col_hs),
+        Paragraph("CANDIDATES",   _col_hs),
     ]]
 
     prev_course = None
@@ -738,7 +785,8 @@ def build_summary_pdf(data: dict, path: str, bw: bool = False) -> str:
     # ── Document ──────────────────────────────────────────────────────────────
     _P_FRAME_H_CONT = _P_PAGE[1] - _P_TOP_PAD - (_P_FOOTER_H + _P_FTR_PAD)
 
-    page_fn = _make_summary_page_fn(centre_name, centre_code, series, header_color=_hdr)
+    page_fn = _make_summary_page_fn(centre_name, centre_code, series,
+                                    header_color=_pg_hdr, hdr_text=_htxt)
 
     frame_first = Frame(
         _P_FRAME_X, _P_FRAME_Y, _P_FRAME_W, _P_FRAME_H,
