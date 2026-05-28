@@ -19,6 +19,7 @@ import streamlit as st
 
 from extract_registers import extract, build_roster
 from register_excel import build_workbook
+from roster_pdf import build_roster_pdf, build_summary_pdf
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -229,7 +230,6 @@ def _gen_roster_pdf(data: dict,
                     course_filter: list | None,
                     report_type_filter: str | None,
                     bw: bool = False) -> bytes:
-    from roster_pdf import build_roster_pdf
     path = _tmp_path(".pdf")
     try:
         build_roster_pdf(data, path,
@@ -243,7 +243,6 @@ def _gen_roster_pdf(data: dict,
 
 
 def _gen_summary_pdf(data: dict, bw: bool = False) -> bytes:
-    from roster_pdf import build_summary_pdf
     path = _tmp_path(".pdf")
     try:
         build_summary_pdf(data, path, bw=bw)
