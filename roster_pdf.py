@@ -166,9 +166,6 @@ _L_FRAME_H = (_L_PAGE[1]
 _L_CM   = [12, 57, 50, 20, 88, 42]   # mm;  Σ = 269 mm
 _L_COLS = [c * mm for c in _L_CM]
 
-_FILLER_ROWS = 5
-
-
 def _roster_col_header_row() -> list:
     labels = ["S/N", "REG NO", "CANDIDATE NAME", "UNITS", "UNIT NAME(S)", "SIGNATURE"]
     return [Paragraph(lbl, _COL_HDR) for lbl in labels]
@@ -189,10 +186,6 @@ def _roster_data_table(entries: list) -> Table:
             "",
         ])
         row_hts.append(None)
-
-    for _ in range(_FILLER_ROWS):
-        rows.append(["", "", "", "", "", ""])
-        row_hts.append(28)
 
     tbl = Table(rows, colWidths=_L_COLS, rowHeights=row_hts,
                 repeatRows=1, hAlign="LEFT")

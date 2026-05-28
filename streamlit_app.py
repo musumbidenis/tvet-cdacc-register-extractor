@@ -59,17 +59,14 @@ a[href*="streamlit.io"]              { display: none !important; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* bleed to page edges */
-    margin-left:  -5rem;
+    margin-left: -5rem;
     margin-right: -5rem;
     margin-bottom: 1.4rem;
 }
 .app-header h1 {
     margin: 0; padding: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: -0.2px;
+    font-size: 1.3rem; font-weight: 700;
+    color: #fff; letter-spacing: -0.2px;
 }
 .app-header .ver {
     font-size: 0.7rem;
@@ -81,86 +78,37 @@ a[href*="streamlit.io"]              { display: none !important; }
 
 /* ── Section label ──────────────────────────────────────────────────────── */
 .sec-lbl {
-    font-size: 0.67rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #6B7280;
-    margin: 0 0 7px;
-    padding: 0;
+    font-size: 0.67rem; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: #6B7280; margin: 0 0 7px; padding: 0;
 }
 
-/* ── Info grid ──────────────────────────────────────────────────────────── */
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 0.9rem;
-}
-.info-card {
-    background: #F8FAFB;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-radius: 8px;
-    padding: 11px 14px;
-}
-.info-card .lbl {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: #6B7280;
-    margin-bottom: 4px;
-}
-.info-card .val {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #111827;
-    line-height: 1.35;
-    word-break: break-word;
-}
-
-/* ── Metric cards ───────────────────────────────────────────────────────── */
-.metrics-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 0.9rem;
-}
+/* ── Metric / info cards  (shared style) ────────────────────────────────── */
+.metrics-row { display: flex; gap: 10px; margin-bottom: 0.9rem; }
 .metric-card {
     flex: 1;
     background: #F8FAFB;
     border: 1px solid rgba(0,0,0,0.07);
     border-radius: 8px;
     padding: 13px 14px 11px;
-    /* border-top colour set inline per card */
+    /* border-top colour and text colour set inline per card */
 }
 .metric-card .num {
-    font-size: 1.9rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 5px;
-    /* colour inherited from parent inline style */
+    font-size: 1.9rem; font-weight: 800;
+    line-height: 1.1; margin-bottom: 5px;
 }
 .metric-card .lbl {
-    font-size: 0.66rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: #6B7280;
-    line-height: 1.3;
+    font-size: 0.66rem; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    color: #6B7280; line-height: 1.3;
 }
 
 /* ── Activity panel ─────────────────────────────────────────────────────── */
 .act-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 8px;
 }
-.act-title {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #111827;
-}
+.act-title { font-size: 0.88rem; font-weight: 700; color: #111827; }
 .badge-done {
     background: #D1FAE5; color: #065F46;
     font-size: 0.67rem; font-weight: 700;
@@ -186,16 +134,19 @@ a[href*="streamlit.io"]              { display: none !important; }
 
 /* ── Export panel ───────────────────────────────────────────────────────── */
 .export-title {
-    font-size: 0.93rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 2px;
+    font-size: 0.93rem; font-weight: 700;
+    color: #111827; margin: 0 0 2px;
 }
 .export-caption {
-    font-size: 0.75rem;
-    color: #6B7280;
-    margin: 0 0 10px;
-    line-height: 1.4;
+    font-size: 0.75rem; color: #6B7280;
+    margin: 0 0 10px; line-height: 1.4;
+}
+
+/* ── Filename input ─────────────────────────────────────────────────────── */
+.fn-label {
+    font-size: 0.67rem; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    color: #6B7280; margin: 8px 0 3px;
 }
 
 /* ── Download buttons ───────────────────────────────────────────────────── */
@@ -204,40 +155,39 @@ a[href*="streamlit.io"]              { display: none !important; }
     font-weight: 600 !important;
     border-radius: 6px !important;
 }
-[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 10px !important;
-}
+[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 10px !important; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   DARK MODE  (follows OS/browser preference)
-══════════════════════════════════════════════════════════════════════════ */
+/* ─── DARK MODE ─────────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
-    .sec-lbl { color: #9CA3AF; }
-
-    .info-card { background: #1E2530; border-color: rgba(255,255,255,0.08); }
-    .info-card .lbl { color: #9CA3AF; }
-    .info-card .val { color: #F3F4F6; }
+    .sec-lbl    { color: #9CA3AF; }
 
     .metric-card { background: #1E2530; border-color: rgba(255,255,255,0.08); }
     .metric-card .lbl { color: #9CA3AF; }
 
-    .act-title { color: #F3F4F6; }
+    .act-title  { color: #F3F4F6; }
     .badge-done { background: #064E3B; color: #6EE7B7; }
     .badge-wait { background: #374151; color: #9CA3AF; }
 
-    .log-box {
-        background: #161B22;
-        border-color: rgba(255,255,255,0.08);
-    }
+    .log-box { background: #161B22; border-color: rgba(255,255,255,0.08); }
 
     .export-title   { color: #F3F4F6; }
     .export-caption { color: #9CA3AF; }
+    .fn-label       { color: #9CA3AF; }
 }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Log colour maps (mirror desktop gui.py) ───────────────────────────────────
+# ── ttkbootstrap "flatly" accent colours — same as desktop metric cards ───────
+_C = {
+    "primary":  "#2c3e50",
+    "info":     "#3498db",
+    "success":  "#18bc9c",
+    "warning":  "#f39c12",
+    "danger":   "#e74c3c",
+}
+
+# ── Log colour/icon maps (mirror desktop gui.py exactly) ─────────────────────
 _LOG_COLORS = {
     "info":    "#999999",
     "step":    "#1565C0",
@@ -256,17 +206,8 @@ _LOG_ICONS = {
 }
 _LOG_BOLD = {"step", "success", "error"}
 
-# ttkbootstrap "flatly" accent colours — match the desktop metric cards exactly
-_METRIC_COLORS = {
-    "units":      "#2c3e50",   # PRIMARY  — dark navy
-    "candidates": "#3498db",   # INFO     — blue
-    "total":      "#18bc9c",   # SUCCESS  — teal
-    "assess":     "#f39c12",   # WARNING  — amber
-    "reassess":   "#e74c3c",   # DANGER   — red
-}
 
-
-# ── Helper functions ──────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _tmp_path(suffix: str) -> str:
     fd, path = tempfile.mkstemp(suffix=suffix)
@@ -281,8 +222,7 @@ def _gen_excel(data: dict) -> bytes:
         with open(path, "rb") as f:
             return f.read()
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if os.path.exists(path): os.unlink(path)
 
 
 def _gen_roster_pdf(data: dict,
@@ -297,8 +237,7 @@ def _gen_roster_pdf(data: dict,
         with open(path, "rb") as f:
             return f.read()
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if os.path.exists(path): os.unlink(path)
 
 
 def _gen_summary_pdf(data: dict) -> bytes:
@@ -309,8 +248,7 @@ def _gen_summary_pdf(data: dict) -> bytes:
         with open(path, "rb") as f:
             return f.read()
     finally:
-        if os.path.exists(path):
-            os.unlink(path)
+        if os.path.exists(path): os.unlink(path)
 
 
 def _course_label(cn: str, cl: str) -> str:
@@ -320,48 +258,52 @@ def _course_label(cn: str, cl: str) -> str:
 
 
 def _safe(s: str) -> str:
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def _render_info_grid(centre_name: str, centre_code: str,
-                      courses_text: str, series: str) -> str:
-    def card(lbl: str, val: str) -> str:
-        safe_val = _safe(val or "—").replace("\n", "<br>")
-        return (
-            f'<div class="info-card">'
-            f'<div class="lbl">{lbl}</div>'
-            f'<div class="val">{safe_val}</div>'
-            f'</div>'
-        )
-    return (
-        '<div class="info-grid">'
-        + card("Centre Name", centre_name)
-        + card("Centre Code", centre_code)
-        + card("Course(s)",   courses_text)
-        + card("Exam Series", series)
-        + '</div>'
+def _merge_data(data_list: list) -> dict:
+    """Merge extracted data from multiple PDFs into one."""
+    if not data_list:
+        return {}
+    if len(data_list) == 1:
+        return data_list[0]
+
+    def _uniq(key: str) -> str:
+        vals = list(dict.fromkeys(
+            d.get(key, "").strip() for d in data_list
+            if d.get(key, "").strip()
+        ))
+        if not vals:  return ""
+        if len(vals) == 1: return vals[0]
+        return " / ".join(vals[:3])
+
+    all_units: list = []
+    for d in data_list:
+        all_units.extend(d.get("units", []))
+
+    return {
+        "centre_name":  _uniq("centre_name"),
+        "centre_code":  _uniq("centre_code"),
+        "series":       _uniq("series"),
+        "course_name":  _uniq("course_name"),
+        "course_level": _uniq("course_level"),
+        "units":        all_units,
+        "unit_count":   len(all_units),
+    }
+
+
+def _metric_card(val: str, lbl: str, color: str, big: bool = True) -> str:
+    """Single card.  big=True → large number font; big=False → normal text."""
+    num_style = "" if big else (
+        "font-size:0.95rem;line-height:1.25;"
+        "word-break:break-word;white-space:pre-line;"
     )
-
-
-def _render_metrics(units: int, candidates: int,
-                    total: int, assess: int, reassess: int) -> str:
-    def card(num: int, lbl: str, key: str) -> str:
-        c = _METRIC_COLORS[key]
-        return (
-            f'<div class="metric-card" '
-            f'style="color:{c};border-top:3px solid {c};">'
-            f'<div class="num">{num}</div>'
-            f'<div class="lbl">{lbl}</div>'
-            f'</div>'
-        )
     return (
-        '<div class="metrics-row">'
-        + card(units,      "Units",                       "units")
-        + card(candidates, "Unique<br>Candidates",        "candidates")
-        + card(total,      "Total<br>Registrations",      "total")
-        + card(assess,     "Assessment<br>Registrations", "assess")
-        + card(reassess,   "Re-Assessment<br>Registrations", "reassess")
-        + '</div>'
+        f'<div class="metric-card" '
+        f'style="color:{color};border-top:3px solid {color};">'
+        f'<div class="num" style="{num_style}">{_safe(val)}</div>'
+        f'<div class="lbl">{_safe(lbl)}</div>'
+        f'</div>'
     )
 
 
@@ -369,8 +311,7 @@ def _render_log(entries: list) -> str:
     if not entries:
         return (
             '<div class="log-box">'
-            '<span style="color:#999;">No activity yet.</span>'
-            '</div>'
+            '<span style="color:#999;">No activity yet.</span></div>'
         )
     lines: list[str] = []
     for ts, level, msg in entries:
@@ -392,74 +333,95 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── File uploader ─────────────────────────────────────────────────────────────
-uploaded = st.file_uploader(
-    "Upload assessment register PDF",
+# ── File uploader  (multiple PDFs) ────────────────────────────────────────────
+uploaded_files = st.file_uploader(
+    "Upload assessment register PDF(s)",
     type=["pdf"],
+    accept_multiple_files=True,
     label_visibility="collapsed",
-    help="Select any TVET CDACC assessment registration register PDF",
+    help="Select one or more TVET CDACC assessment register PDFs — "
+         "you can keep adding more files while previous ones remain processed.",
 )
 
-if not uploaded:
-    st.info("Open a TVET CDACC assessment register PDF to begin.", icon="📂")
+if not uploaded_files:
+    st.info(
+        "Upload one or more TVET CDACC assessment register PDFs to begin.  "
+        "You can keep adding files — each new one will be processed and merged.",
+        icon="📂",
+    )
     st.stop()
 
-# ── Extract (only when file changes) ─────────────────────────────────────────
-if (st.session_state.get("pdf_name") != uploaded.name
-        or "data" not in st.session_state):
+# ── Incremental extraction ────────────────────────────────────────────────────
+current_map: dict = {f.name: f for f in uploaded_files}
+processed:   dict = st.session_state.get("processed_files", {})   # {name: data}
+all_logs:    list = st.session_state.get("log_entries", [])
 
-    tmp_pdf     = _tmp_path(".pdf")
-    log_entries: list = []
+removed = [name for name in list(processed.keys()) if name not in current_map]
+added   = [f for name, f in current_map.items() if name not in processed]
 
+for name in removed:
+    del processed[name]
+
+for uploaded in added:
+    tmp = _tmp_path(".pdf")
+    file_logs: list = []
     try:
-        with open(tmp_pdf, "wb") as f:
-            f.write(uploaded.getvalue())
+        with open(tmp, "wb") as fh:
+            fh.write(uploaded.getvalue())
 
-        with st.status("🔍  Reading PDF…", expanded=True) as status:
+        with st.status(f"🔍  Reading {uploaded.name}…", expanded=True) as status:
             prog = st.progress(0, text="Initialising…")
 
-            def on_log(level: str, msg: str):
+            def on_log(level: str, msg: str,
+                       _logs: list = file_logs) -> None:
                 ts = datetime.now().strftime("%H:%M:%S")
-                log_entries.append((ts, level, msg))
+                _logs.append((ts, level, msg))
                 _icons = {
                     "step": "🔍", "found": "📋", "success": "✅",
                     "warn": "⚠️", "error": "❌", "info": "·",
                 }
                 st.write(f"{_icons.get(level, '·')}  {msg}")
 
-            def on_progress(cur: int, total: int):
-                prog.progress(cur / total, text=f"Page {cur} of {total}")
+            def on_progress(cur: int, total: int,
+                            _p=prog) -> None:
+                _p.progress(cur / total, text=f"Page {cur} of {total}")
 
-            data = extract(tmp_pdf, on_log=on_log, on_progress=on_progress)
+            data = extract(tmp, on_log=on_log, on_progress=on_progress)
             prog.progress(1.0, text="Complete ✓")
             status.update(
-                label="✅  Extraction complete!",
+                label=f"✅  {uploaded.name} — extraction complete!",
                 state="complete",
                 expanded=False,
             )
 
-        st.session_state.data            = data
-        st.session_state.pdf_name        = uploaded.name
-        st.session_state.log_entries     = log_entries
-        st.session_state.extraction_done = True
-        for key in list(st.session_state.keys()):
-            if key.startswith("_cache_"):
-                del st.session_state[key]
+        processed[uploaded.name] = data
+        all_logs.extend(file_logs)
 
     except Exception as exc:
-        st.error(f"❌  Extraction failed: {exc}")
-        st.stop()
+        st.error(f"❌  {uploaded.name}: {exc}")
     finally:
-        if os.path.exists(tmp_pdf):
-            os.unlink(tmp_pdf)
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
+# Persist state; clear export caches whenever the file set changes
+if removed or added:
+    st.session_state.processed_files  = processed
+    st.session_state.log_entries      = all_logs
+    st.session_state.extraction_done  = bool(processed)
+    st.session_state.data             = _merge_data(list(processed.values()))
+    for key in list(st.session_state.keys()):
+        if key.startswith("_cache_"):
+            del st.session_state[key]
 
+if not processed:
+    st.warning("No files were processed successfully.")
+    st.stop()
+
+# ── Working values ────────────────────────────────────────────────────────────
 data        = st.session_state.data
-stem        = os.path.splitext(uploaded.name)[0]
 log_entries = st.session_state.get("log_entries", [])
 extr_done   = st.session_state.get("extraction_done", False)
 
-# ── Derived values ────────────────────────────────────────────────────────────
 roster   = build_roster(data)
 total    = sum(u["candidate_count"] for u in data["units"])
 assess   = sum(
@@ -472,33 +434,45 @@ seen_courses = list(dict.fromkeys(
     (u.get("course_name", ""), u.get("course_level", ""))
     for u in data["units"] if u.get("course_name", "")
 ))
-courses_text = "\n".join(
-    _course_label(cn, cl) for cn, cl in seen_courses
-) or "—"
 
-# ── Extracted Information ─────────────────────────────────────────────────────
+# Default stem for filenames
+if len(uploaded_files) == 1:
+    stem_default = os.path.splitext(uploaded_files[0].name)[0]
+else:
+    stem_default = "CDACC_registers"
+
+# ── Info row  (same metric-card style, courses shows count) ──────────────────
 st.markdown('<p class="sec-lbl">Extracted Information</p>', unsafe_allow_html=True)
 st.markdown(
-    _render_info_grid(
-        data.get("centre_name") or "—",
-        data.get("centre_code") or "—",
-        courses_text,
-        data.get("series") or "—",
-    ),
+    '<div class="metrics-row">'
+    + _metric_card(data.get("centre_name") or "—", "Centre Name", _C["primary"], big=False)
+    + _metric_card(data.get("centre_code") or "—", "Centre Code", _C["info"],    big=False)
+    + _metric_card(str(len(seen_courses)),          "Courses",     _C["success"], big=True)
+    + _metric_card(data.get("series") or "—",       "Exam Series", _C["warning"], big=False)
+    + '</div>',
     unsafe_allow_html=True,
 )
 
-# ── Metrics ───────────────────────────────────────────────────────────────────
+# ── Metric row ────────────────────────────────────────────────────────────────
 st.markdown(
-    _render_metrics(data["unit_count"], len(roster), total, assess, reassess),
+    '<div class="metrics-row">'
+    + _metric_card(str(data["unit_count"]), "Units",                       _C["primary"])
+    + _metric_card(str(len(roster)),        "Unique<br>Candidates",        _C["info"])
+    + _metric_card(str(total),              "Total<br>Registrations",      _C["success"])
+    + _metric_card(str(assess),             "Assessment<br>Registrations", _C["warning"])
+    + _metric_card(str(reassess),           "Re-Assessment<br>Registrations", _C["danger"])
+    + '</div>',
     unsafe_allow_html=True,
 )
 
 # ── Activity ──────────────────────────────────────────────────────────────────
 with st.container(border=True):
+    n_files = len(processed)
     badge = (
-        '<span class="badge-done">Complete ✓</span>' if extr_done
-        else '<span class="badge-wait">Waiting…</span>'
+        f'<span class="badge-done">Complete ✓  '
+        f'({n_files} file{"s" if n_files != 1 else ""})</span>'
+        if extr_done else
+        '<span class="badge-wait">Waiting…</span>'
     )
     st.markdown(
         f'<div class="act-header">'
@@ -529,10 +503,16 @@ with st.container(border=True):
         if _xk not in st.session_state:
             with st.spinner("Building workbook…"):
                 st.session_state[_xk] = _gen_excel(data)
+
+        st.markdown('<p class="fn-label">Save as</p>', unsafe_allow_html=True)
+        excel_fn = st.text_input(
+            "Excel filename", value=f"{stem_default}_extracted",
+            key="fn_excel", label_visibility="collapsed",
+        )
         st.download_button(
             label="⬇  Download Excel",
             data=st.session_state[_xk],
-            file_name=f"{stem}_extracted.xlsx",
+            file_name=f"{excel_fn.strip() or stem_default}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
             type="primary",
@@ -556,12 +536,9 @@ with st.container(border=True):
             (u.get("report_type") or "").lower().startswith("re")
             for u in data["units"]
         )
-
         rt_options: dict[str, str | None] = {"All report types": None}
-        if has_assess:
-            rt_options["Assessment only"]    = "Assessment Registrations"
-        if has_reassess:
-            rt_options["Re-Assessment only"] = "Re-Assessment Registrations"
+        if has_assess:   rt_options["Assessment only"]    = "Assessment Registrations"
+        if has_reassess: rt_options["Re-Assessment only"] = "Re-Assessment Registrations"
 
         rt_label = st.radio(
             "Report type", list(rt_options.keys()),
@@ -595,14 +572,19 @@ with st.container(border=True):
                         data, course_filter, report_type_filter
                     )
             _slug = (
-                "all"          if not report_type_filter
-                else "assessment" if "assessment" in report_type_filter.lower()
+                "all"            if not report_type_filter
+                else "assessment"    if "assessment" in report_type_filter.lower()
                 else "reassessment"
+            )
+            st.markdown('<p class="fn-label">Save as</p>', unsafe_allow_html=True)
+            roster_fn = st.text_input(
+                "Roster filename", value=f"{stem_default}_{_slug}_roster",
+                key="fn_roster", label_visibility="collapsed",
             )
             st.download_button(
                 label="⬇  Download Roster PDF",
                 data=st.session_state[_rk],
-                file_name=f"{stem}_{_slug}_roster.pdf",
+                file_name=f"{roster_fn.strip() or stem_default}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
                 type="primary",
@@ -621,10 +603,16 @@ with st.container(border=True):
         if _sk not in st.session_state:
             with st.spinner("Building summary PDF…"):
                 st.session_state[_sk] = _gen_summary_pdf(data)
+
+        st.markdown('<p class="fn-label">Save as</p>', unsafe_allow_html=True)
+        summary_fn = st.text_input(
+            "Summary filename", value=f"{stem_default}_summary",
+            key="fn_summary", label_visibility="collapsed",
+        )
         st.download_button(
             label="⬇  Download Summary PDF",
             data=st.session_state[_sk],
-            file_name=f"{stem}_summary.pdf",
+            file_name=f"{summary_fn.strip() or stem_default}.pdf",
             mime="application/pdf",
             use_container_width=True,
             type="primary",
