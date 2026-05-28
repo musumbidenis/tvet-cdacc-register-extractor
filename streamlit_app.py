@@ -19,6 +19,12 @@ import streamlit as st
 
 from extract_registers import extract, build_roster
 from register_excel import build_workbook
+
+# Force re-execution of roster_pdf from source on every app start so that
+# Streamlit Cloud's persistent __pycache__ can never serve a stale .pyc.
+import importlib
+import roster_pdf as _roster_pdf_mod
+importlib.reload(_roster_pdf_mod)
 from roster_pdf import build_roster_pdf, build_summary_pdf
 
 # ── Page config ───────────────────────────────────────────────────────────────
