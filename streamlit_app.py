@@ -37,6 +37,13 @@ footer               { display: none !important; }
 [data-testid="stDeployButton"]       { display: none !important; }
 [data-testid="stToolbar"]            { display: none !important; }
 [data-testid="stDecoration"]         { display: none !important; }
+[data-testid="stStatusWidget"]       { display: none !important; }
+[data-testid="stAppCreatorBadge"]    { display: none !important; }
+/* "Created by" / "Hosted by Streamlit" badge (bottom-right) */
+.viewerBadge_container__r5tak        { display: none !important; }
+.viewerBadge_link__qRIco             { display: none !important; }
+a[href*="streamlit.io"]              { display: none !important; }
+iframe[title="st_app_creator_badge"] { display: none !important; }
 
 /* ── Layout ────────────────────────────────────────────── */
 .block-container {
@@ -111,24 +118,22 @@ footer               { display: none !important; }
     color: #111827 !important;
 }
 
-/* ── Export cards ────────────────────────────────────────── */
-.export-card {
-    border-radius: 12px;
-    padding: 20px 22px 18px;
-    border: 1px solid rgba(0,0,0,0.09);
-    background: #F8FAFB;
-    height: 100%;
+/* ── Export containers ───────────────────────────────────── */
+/* Give bordered containers a slightly warmer background */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 12px !important;
+    padding: 4px 6px !important;
 }
-.export-card h4 {
-    margin: 0 0 4px;
+.export-title {
     font-size: 1rem;
     font-weight: 700;
     color: #111827;
+    margin: 0 0 3px;
 }
-.export-card p {
-    margin: 0 0 16px;
-    font-size: 0.79rem;
+.export-caption {
+    font-size: 0.78rem;
     color: #6B7280;
+    margin: 0 0 4px;
     line-height: 1.45;
 }
 
@@ -175,8 +180,8 @@ footer               { display: none !important; }
         background: #1E2530;
         border-color: rgba(255,255,255,0.08);
     }
-    .export-card h4    { color: #F3F4F6; }
-    .export-card p     { color: #9CA3AF; }
+    .export-title  { color: #F3F4F6; }
+    .export-caption{ color: #9CA3AF; }
 
     [data-testid="stMetric"] {
         background: #1E2530;
@@ -382,117 +387,115 @@ ex_col, roster_col, summary_col = st.columns([1, 1.7, 1], gap="large")
 
 # ── Excel Workbook ────────────────────────────────────────────────────────────
 with ex_col:
-    st.markdown("""
-    <div class="export-card">
-      <h4>📊 Excel Workbook</h4>
-      <p>All candidates, units, and roster — one workbook, three sheets.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<p class="export-title">📊 Excel Workbook</p>',
+                    unsafe_allow_html=True)
+        st.markdown('<p class="export-caption">All candidates, units, and roster — '
+                    'one workbook, three sheets.</p>', unsafe_allow_html=True)
 
-    _xk = "_cache_excel"
-    if _xk not in st.session_state:
-        with st.spinner("Building workbook…"):
-            st.session_state[_xk] = _gen_excel(data)
+        _xk = "_cache_excel"
+        if _xk not in st.session_state:
+            with st.spinner("Building workbook…"):
+                st.session_state[_xk] = _gen_excel(data)
 
-    st.download_button(
-        label="⬇  Download Excel",
-        data=st.session_state[_xk],
-        file_name=f"{stem}_extracted.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True,
-        type="primary",
-    )
-
-# ── Roster PDF ────────────────────────────────────────────────────────────────
-with roster_col:
-    st.markdown("""
-    <div class="export-card">
-      <h4>📄 Roster PDF</h4>
-      <p>Landscape A4 attendance roster with candidate list and signature column.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    has_assess   = any(
-        (u.get("report_type") or "").lower().startswith("assessment")
-        for u in data["units"]
-    )
-    has_reassess = any(
-        (u.get("report_type") or "").lower().startswith("re")
-        for u in data["units"]
-    )
-
-    rt_options: dict[str, str | None] = {"All report types": None}
-    if has_assess:
-        rt_options["Assessment only"]    = "Assessment Registrations"
-    if has_reassess:
-        rt_options["Re-Assessment only"] = "Re-Assessment Registrations"
-
-    rt_label = st.radio(
-        "Report type",
-        list(rt_options.keys()),
-        horizontal=True,
-        key="roster_rt",
-    )
-    report_type_filter = rt_options[rt_label]
-
-    all_courses  = list(dict.fromkeys(
-        (u.get("course_name", ""), u.get("course_level", ""))
-        for u in data["units"]
-    ))
-    course_map   = {_course_label(cn, cl): (cn, cl) for cn, cl in all_courses}
-    sel_labels   = st.multiselect(
-        "Courses to include",
-        options=list(course_map.keys()),
-        default=list(course_map.keys()),
-        key="roster_courses",
-    )
-
-    if not sel_labels:
-        st.warning("Select at least one course.")
-    else:
-        course_filter = (
-            None if len(sel_labels) == len(course_map)
-            else [course_map[lbl] for lbl in sel_labels]
-        )
-
-        _rk = f"_cache_roster_{rt_label}_{'|'.join(sorted(sel_labels))}"
-        if _rk not in st.session_state:
-            with st.spinner("Building roster PDF…"):
-                st.session_state[_rk] = _gen_roster_pdf(
-                    data, course_filter, report_type_filter
-                )
-
-        _slug = ("all"           if not report_type_filter
-                 else "assessment" if "assessment" in report_type_filter.lower()
-                 else "reassessment")
         st.download_button(
-            label="⬇  Download Roster PDF",
-            data=st.session_state[_rk],
-            file_name=f"{stem}_{_slug}_roster.pdf",
-            mime="application/pdf",
+            label="⬇  Download Excel",
+            data=st.session_state[_xk],
+            file_name=f"{stem}_extracted.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
             type="primary",
         )
 
+# ── Roster PDF ────────────────────────────────────────────────────────────────
+with roster_col:
+    with st.container(border=True):
+        st.markdown('<p class="export-title">📄 Roster PDF</p>',
+                    unsafe_allow_html=True)
+        st.markdown('<p class="export-caption">Landscape A4 attendance roster '
+                    'with candidate list and signature column.</p>',
+                    unsafe_allow_html=True)
+
+        has_assess   = any(
+            (u.get("report_type") or "").lower().startswith("assessment")
+            for u in data["units"]
+        )
+        has_reassess = any(
+            (u.get("report_type") or "").lower().startswith("re")
+            for u in data["units"]
+        )
+
+        rt_options: dict[str, str | None] = {"All report types": None}
+        if has_assess:
+            rt_options["Assessment only"]    = "Assessment Registrations"
+        if has_reassess:
+            rt_options["Re-Assessment only"] = "Re-Assessment Registrations"
+
+        rt_label = st.radio(
+            "Report type",
+            list(rt_options.keys()),
+            horizontal=True,
+            key="roster_rt",
+        )
+        report_type_filter = rt_options[rt_label]
+
+        all_courses = list(dict.fromkeys(
+            (u.get("course_name", ""), u.get("course_level", ""))
+            for u in data["units"]
+        ))
+        course_map  = {_course_label(cn, cl): (cn, cl) for cn, cl in all_courses}
+        sel_labels  = st.multiselect(
+            "Courses to include",
+            options=list(course_map.keys()),
+            default=list(course_map.keys()),
+            key="roster_courses",
+        )
+
+        if not sel_labels:
+            st.warning("Select at least one course.")
+        else:
+            course_filter = (
+                None if len(sel_labels) == len(course_map)
+                else [course_map[lbl] for lbl in sel_labels]
+            )
+
+            _rk = f"_cache_roster_{rt_label}_{'|'.join(sorted(sel_labels))}"
+            if _rk not in st.session_state:
+                with st.spinner("Building roster PDF…"):
+                    st.session_state[_rk] = _gen_roster_pdf(
+                        data, course_filter, report_type_filter
+                    )
+
+            _slug = ("all"           if not report_type_filter
+                     else "assessment" if "assessment" in report_type_filter.lower()
+                     else "reassessment")
+            st.download_button(
+                label="⬇  Download Roster PDF",
+                data=st.session_state[_rk],
+                file_name=f"{stem}_{_slug}_roster.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary",
+            )
+
 # ── Summary PDF ───────────────────────────────────────────────────────────────
 with summary_col:
-    st.markdown("""
-    <div class="export-card">
-      <h4>📋 Summary PDF</h4>
-      <p>Portrait A4 — statistics and full unit breakdown.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<p class="export-title">📋 Summary PDF</p>',
+                    unsafe_allow_html=True)
+        st.markdown('<p class="export-caption">Portrait A4 — statistics '
+                    'and full unit breakdown.</p>', unsafe_allow_html=True)
 
-    _sk = "_cache_summary"
-    if _sk not in st.session_state:
-        with st.spinner("Building summary PDF…"):
-            st.session_state[_sk] = _gen_summary_pdf(data)
+        _sk = "_cache_summary"
+        if _sk not in st.session_state:
+            with st.spinner("Building summary PDF…"):
+                st.session_state[_sk] = _gen_summary_pdf(data)
 
-    st.download_button(
-        label="⬇  Download Summary PDF",
-        data=st.session_state[_sk],
-        file_name=f"{stem}_summary.pdf",
-        mime="application/pdf",
-        use_container_width=True,
-        type="primary",
-    )
+        st.download_button(
+            label="⬇  Download Summary PDF",
+            data=st.session_state[_sk],
+            file_name=f"{stem}_summary.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            type="primary",
+        )
