@@ -57,6 +57,7 @@ a[href*="streamlit.io"]              { display: none !important; }
     padding-top: 0 !important;
     padding-bottom: 2rem;
     max-width: 1150px;
+    overflow-x: hidden;   /* prevent accidental horizontal scroll */
 }
 
 /* ── App header ─────────────────────────────────────────────────────────── */
@@ -66,6 +67,10 @@ a[href*="streamlit.io"]              { display: none !important; }
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+    /* Break out of block-container to fill full width.
+       Value matches Streamlit's wide-mode left/right padding (~5 rem). */
     margin-left: -5rem;
     margin-right: -5rem;
     margin-bottom: 1.4rem;
@@ -91,9 +96,15 @@ a[href*="streamlit.io"]              { display: none !important; }
 }
 
 /* ── Metric / info cards  (shared style) ────────────────────────────────── */
-.metrics-row { display: flex; gap: 10px; margin-bottom: 0.9rem; }
+.metrics-row {
+    display: flex;
+    flex-wrap: wrap;       /* cards wrap onto the next line when too narrow */
+    gap: 10px;
+    margin-bottom: 0.9rem;
+}
 .metric-card {
-    flex: 1;
+    flex: 1 1 0;           /* grow/shrink equally; browser wraps when < min-width */
+    min-width: 110px;
     background: #F8FAFB;
     border: 1px solid rgba(0,0,0,0.07);
     border-radius: 8px;
@@ -180,6 +191,49 @@ a[href*="streamlit.io"]              { display: none !important; }
     .export-title   { color: #F3F4F6; }
     .export-caption { color: #9CA3AF; }
     .fn-label       { color: #9CA3AF; }
+}
+
+/* ─── RESPONSIVE — tablet  (≤ 768 px) ───────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Streamlit reduces its container padding around this breakpoint */
+    .app-header { margin-left: -2.5rem; margin-right: -2.5rem; }
+    .metric-card .num { font-size: 1.6rem; }
+}
+
+/* ─── RESPONSIVE — mobile  (≤ 576 px) ───────────────────────────────────── */
+@media (max-width: 576px) {
+    /* Streamlit's container padding collapses to ~1 rem on small phones */
+    .app-header {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding: 10px 14px;
+    }
+    .app-header h1 { font-size: 1.05rem; }
+
+    /* Cards: 2-column grid instead of a single squished row */
+    .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .metric-card { min-width: unset; padding: 10px 11px 9px; }
+    .metric-card .num { font-size: 1.45rem; }
+
+    /* Stack the 3-column export section vertically */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+    }
+    [data-testid="stColumn"] {
+        width: 100% !important;
+        min-width: 100% !important;
+        flex: 1 0 100% !important;
+    }
+
+    /* Shorter log on mobile — saves screen real-estate */
+    .log-box { max-height: 160px; font-size: 0.74rem; }
+
+    /* Tighten section labels */
+    .sec-lbl { margin-bottom: 5px; }
 }
 </style>
 """, unsafe_allow_html=True)
