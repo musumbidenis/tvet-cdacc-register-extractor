@@ -54,6 +54,13 @@ BLACK    = colors.HexColor("#000000")
 BORDER_C = colors.HexColor("#BBBBBB")
 NAVY     = colors.Color(0.094, 0.322, 0.498)       # dark header for summary
 
+# ── B&W / print-mode colours  (used when bw=True) ────────────────────────────
+BW_HDR    = colors.HexColor("#1C1C1C")   # replaces GREEN fills (header bar + col headers)
+BW_SEP    = colors.HexColor("#DEDEDE")   # separator rows in summary (replaces green-tinted)
+BW_ALT    = colors.HexColor("#EBEBEB")   # alternating data rows (more visible when printed)
+BW_TOTAL  = colors.HexColor("#C8C8C8")   # total row background
+BW_BORDER = colors.HexColor("#888888")   # box / grid borders (darker = more visible on print)
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Shared paragraph styles
@@ -171,7 +178,12 @@ def _roster_col_header_row() -> list:
     return [Paragraph(lbl, _COL_HDR) for lbl in labels]
 
 
-def _roster_data_table(entries: list) -> Table:
+def _roster_data_table(entries: list,
+                        header_color=None,
+                        border_color=None) -> Table:
+    _hdr = header_color if header_color is not None else GREEN
+    _brd = border_color if border_color is not None else BORDER_C
+
     rows    = [_roster_col_header_row()]
     row_hts = [None]
 
@@ -190,7 +202,7 @@ def _roster_data_table(entries: list) -> Table:
     tbl = Table(rows, colWidths=_L_COLS, rowHeights=row_hts,
                 repeatRows=1, hAlign="LEFT")
     tbl.setStyle(TableStyle([
-        ("BACKGROUND",    (0, 0), (-1,  0),  GREEN),
+        ("BACKGROUND",    (0, 0), (-1,  0),  _hdr),
         ("TOPPADDING",    (0, 0), (-1,  0),  8),
         ("BOTTOMPADDING", (0, 0), (-1,  0),  8),
         ("VALIGN",        (0, 0), (-1,  0),  "MIDDLE"),
@@ -202,8 +214,8 @@ def _roster_data_table(entries: list) -> Table:
         ("RIGHTPADDING",  (0, 0), (-1, -1),  6),
         ("ALIGN",         (0, 1), (0,  -1),  "CENTER"),
         ("ALIGN",         (3, 1), (3,  -1),  "CENTER"),
-        ("BOX",           (0, 0), (-1, -1),  0.6, BORDER_C),
-        ("INNERGRID",     (0, 0), (-1, -1),  0.3, BORDER_C),
+        ("BOX",           (0, 0), (-1, -1),  0.6, _brd),
+        ("INNERGRID",     (0, 0), (-1, -1),  0.3, _brd),
     ]))
     return tbl
 
@@ -211,8 +223,9 @@ def _roster_data_table(entries: list) -> Table:
 _INST_DEPT = "ICT DEPARTMENT"
 
 
-def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str = ""):
-    """Return the onPage callback that draws the green header on the first page
+def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str = "",
+                          header_color=None):
+    """Return the onPage callback that draws the header on the first page
     of each course group only.
 
     Left  — top:    centre name
@@ -220,6 +233,7 @@ def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str =
     Right — top:    CDACC EXAM REGISTRATION(S)
              bottom: course name for this specific group
     """
+    _hdr  = header_color if header_color is not None else GREEN
     _pad  = 5 * mm
     _gap  = 6 * mm
     _half = _L_W / 2 - _pad - _gap / 2
@@ -230,7 +244,7 @@ def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str =
         canvas.saveState()
 
         rect_bottom = _L_PAGE[1] - _L_TOP_PAD - _L_HEADER_H
-        canvas.setFillColor(GREEN)
+        canvas.setFillColor(_hdr)
         canvas.rect(_L_MARGIN, rect_bottom, _L_W, _L_HEADER_H, fill=1, stroke=0)
 
         y1 = _L_PAGE[1] - _L_TOP_PAD - 8  * mm
@@ -264,7 +278,8 @@ def _make_roster_page_fn(course_label: str, centre_name: str, centre_code: str =
 
 def build_roster_pdf(data: dict, path: str,
                      course_filter: list | None = None,
-                     report_type_filter: str | None = None) -> str:
+                     report_type_filter: str | None = None,
+                     bw: bool = False) -> str:
     """
     Build a landscape A4 candidate-roster PDF.
 
@@ -275,7 +290,10 @@ def build_roster_pdf(data: dict, path: str,
     course_filter     : None → all courses; [(name, level), ...] → selected only
     report_type_filter: None → all; "Assessment Registrations" or
                         "Re-Assessment Registrations" → filter by report type
+    bw                : True → greyscale / print-friendly version
     """
+    _hdr = BW_HDR    if bw else GREEN
+    _brd = BW_BORDER if bw else BORDER_C
     # Apply report-type filter on units before building roster
     working_data = data
     if report_type_filter:
@@ -330,7 +348,8 @@ def build_roster_pdf(data: dict, path: str,
     page_templates: list = []
     for i, ((cname, clevel), _entries) in enumerate(groups):
         course_lbl = _fmt_course(cname, clevel)
-        page_fn    = _make_roster_page_fn(course_lbl, centre_name, centre_code)
+        page_fn    = _make_roster_page_fn(course_lbl, centre_name, centre_code,
+                                          header_color=_hdr)
 
         frame_first = Frame(
             _L_FRAME_X, _L_FRAME_Y, _L_FRAME_W, _L_FRAME_H,
@@ -352,7 +371,8 @@ def build_roster_pdf(data: dict, path: str,
     # Fallback templates (used if groups is empty)
     if not page_templates:
         fb_fn = _make_roster_page_fn(
-            data.get("course_name") or "Assessment Register", centre_name, centre_code)
+            data.get("course_name") or "Assessment Register", centre_name, centre_code,
+            header_color=_hdr)
         page_templates.append(PageTemplate(
             id="course_0", pagesize=_L_PAGE,
             frames=Frame(_L_FRAME_X, _L_FRAME_Y, _L_FRAME_W, _L_FRAME_H,
@@ -375,7 +395,7 @@ def build_roster_pdf(data: dict, path: str,
         story.append(NextPageTemplate(f"course_{i}_cont"))
         # Sort candidates by registration number
         entries_sorted = sorted(entries, key=lambda x: x[0])
-        tbl = _roster_data_table(entries_sorted)
+        tbl = _roster_data_table(entries_sorted, header_color=_hdr, border_color=_brd)
         story.append(tbl)
 
     # ── Document ──────────────────────────────────────────────────────────────
@@ -462,13 +482,15 @@ _SM_CELL_TOTAL_N = ParagraphStyle(
 )
 
 
-def _make_summary_page_fn(centre_name: str, centre_code: str, series: str = ""):
-    """Return the onPage callback that draws the GREEN header on the first
+def _make_summary_page_fn(centre_name: str, centre_code: str, series: str = "",
+                           header_color=None):
+    """Return the onPage callback that draws the header on the first
     summary page only.
 
     Top row  — centre name, centred across full width, bold, dynamic font (max 13)
     Bottom row — Centre Code (left) | series (right)
     """
+    _hdr       = header_color if header_color is not None else GREEN
     _pad       = 5 * mm
     _gap       = 6 * mm
     _half      = _P_W / 2 - _pad - _gap / 2
@@ -482,7 +504,7 @@ def _make_summary_page_fn(centre_name: str, centre_code: str, series: str = ""):
         canvas.saveState()
 
         rect_bottom = _P_PAGE[1] - _P_TOP_PAD - _P_HEADER_H
-        canvas.setFillColor(GREEN)
+        canvas.setFillColor(_hdr)
         canvas.rect(_P_MARGIN, rect_bottom, _P_W, _P_HEADER_H, fill=1, stroke=0)
 
         y1 = _P_PAGE[1] - _P_TOP_PAD - 8  * mm
@@ -532,13 +554,23 @@ def _info_table(rows_data: list, col_widths: list) -> Table:
     return tbl
 
 
-def build_summary_pdf(data: dict, path: str) -> str:
+def build_summary_pdf(data: dict, path: str, bw: bool = False) -> str:
     """
     Build a portrait A4 summary PDF.
 
     Shows centre info, statistics (total / per-type breakdown), and a
     per-unit table with candidate counts.
+
+    Parameters
+    ----------
+    bw : True → greyscale / print-friendly version
     """
+    _hdr   = BW_HDR    if bw else GREEN
+    _sep   = BW_SEP    if bw else colors.Color(0.93, 0.97, 0.94)
+    _alt   = BW_ALT    if bw else LTGRAY
+    _total = BW_TOTAL  if bw else LTGRAY
+    _brd   = BW_BORDER if bw else BORDER_C
+
     roster     = build_roster(data)
     all_units  = data["units"]
     total_regs = sum(u["candidate_count"] for u in all_units)
@@ -665,7 +697,7 @@ def build_summary_pdf(data: dict, path: str) -> str:
 
     # Build row styles dynamically
     tbl_style = [
-        ("BACKGROUND",    (0, 0), (-1,  0),  GREEN),
+        ("BACKGROUND",    (0, 0), (-1,  0),  _hdr),
         ("TOPPADDING",    (0, 0), (-1,  0),  4),
         ("BOTTOMPADDING", (0, 0), (-1,  0),  4),
         ("VALIGN",        (0, 0), (-1,  0),  "MIDDLE"),
@@ -675,10 +707,10 @@ def build_summary_pdf(data: dict, path: str) -> str:
         ("VALIGN",        (0, 1), (-1, -1),  "MIDDLE"),
         ("LEFTPADDING",   (0, 0), (-1, -1),  5),
         ("RIGHTPADDING",  (0, 0), (-1, -1),  5),
-        ("BOX",           (0, 0), (-1, -1),  0.6, BORDER_C),
-        ("INNERGRID",     (0, 0), (-1, -1),  0.3, BORDER_C),
+        ("BOX",           (0, 0), (-1, -1),  0.6, _brd),
+        ("INNERGRID",     (0, 0), (-1, -1),  0.3, _brd),
         # Total row
-        ("BACKGROUND",    (0, -1), (-1, -1), LTGRAY),
+        ("BACKGROUND",    (0, -1), (-1, -1), _total),
         ("FONTNAME",      (0, -1), (-1, -1), _FB),
     ]
 
@@ -688,11 +720,11 @@ def build_summary_pdf(data: dict, path: str) -> str:
         is_sep = (isinstance(row[1], str) and row[1] == ""
                   and not isinstance(row[0], str))
         if is_sep:
-            tbl_style.append(("BACKGROUND", (0, ri), (-1, ri), colors.Color(0.93, 0.97, 0.94)))
+            tbl_style.append(("BACKGROUND", (0, ri), (-1, ri), _sep))
             tbl_style.append(("SPAN",       (0, ri), (-1, ri)))
         else:
             if data_row_idx % 2 == 1 and ri < len(unit_rows) - 1:
-                tbl_style.append(("BACKGROUND", (0, ri), (-1, ri), LTGRAY))
+                tbl_style.append(("BACKGROUND", (0, ri), (-1, ri), _alt))
             data_row_idx += 1
 
     unit_tbl = Table(
@@ -706,7 +738,7 @@ def build_summary_pdf(data: dict, path: str) -> str:
     # ── Document ──────────────────────────────────────────────────────────────
     _P_FRAME_H_CONT = _P_PAGE[1] - _P_TOP_PAD - (_P_FOOTER_H + _P_FTR_PAD)
 
-    page_fn = _make_summary_page_fn(centre_name, centre_code, series)
+    page_fn = _make_summary_page_fn(centre_name, centre_code, series, header_color=_hdr)
 
     frame_first = Frame(
         _P_FRAME_X, _P_FRAME_Y, _P_FRAME_W, _P_FRAME_H,

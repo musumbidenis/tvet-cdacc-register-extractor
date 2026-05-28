@@ -227,24 +227,26 @@ def _gen_excel(data: dict) -> bytes:
 
 def _gen_roster_pdf(data: dict,
                     course_filter: list | None,
-                    report_type_filter: str | None) -> bytes:
+                    report_type_filter: str | None,
+                    bw: bool = False) -> bytes:
     from roster_pdf import build_roster_pdf
     path = _tmp_path(".pdf")
     try:
         build_roster_pdf(data, path,
                          course_filter=course_filter,
-                         report_type_filter=report_type_filter)
+                         report_type_filter=report_type_filter,
+                         bw=bw)
         with open(path, "rb") as f:
             return f.read()
     finally:
         if os.path.exists(path): os.unlink(path)
 
 
-def _gen_summary_pdf(data: dict) -> bytes:
+def _gen_summary_pdf(data: dict, bw: bool = False) -> bytes:
     from roster_pdf import build_summary_pdf
     path = _tmp_path(".pdf")
     try:
-        build_summary_pdf(data, path)
+        build_summary_pdf(data, path, bw=bw)
         with open(path, "rb") as f:
             return f.read()
     finally:
@@ -293,7 +295,8 @@ def _merge_data(data_list: list) -> dict:
 
 
 def _metric_card(val: str, lbl: str, color: str, big: bool = True) -> str:
-    """Single card.  big=True → large number font; big=False → normal text."""
+    """Single card.  big=True → large number font; big=False → normal text.
+    lbl may contain raw HTML (e.g. <br>) — it is NOT escaped."""
     num_style = "" if big else (
         "font-size:0.95rem;line-height:1.25;"
         "word-break:break-word;white-space:pre-line;"
@@ -302,7 +305,7 @@ def _metric_card(val: str, lbl: str, color: str, big: bool = True) -> str:
         f'<div class="metric-card" '
         f'style="color:{color};border-top:3px solid {color};">'
         f'<div class="num" style="{num_style}">{_safe(val)}</div>'
-        f'<div class="lbl">{_safe(lbl)}</div>'
+        f'<div class="lbl">{lbl}</div>'
         f'</div>'
     )
 
@@ -558,6 +561,12 @@ with st.container(border=True):
             key="roster_courses",
         )
 
+        roster_bw = st.radio(
+            "Colour mode",
+            ["🎨  Colour", "🖨️  B&W / Print"],
+            horizontal=True, key="roster_bw",
+        ) == "🖨️  B&W / Print"
+
         if not sel_labels:
             st.warning("Select at least one course.")
         else:
@@ -565,20 +574,23 @@ with st.container(border=True):
                 None if len(sel_labels) == len(course_map)
                 else [course_map[lbl] for lbl in sel_labels]
             )
-            _rk = f"_cache_roster_{rt_label}_{'|'.join(sorted(sel_labels))}"
+            _bw_tag = "bw" if roster_bw else "col"
+            _rk = f"_cache_roster_{rt_label}_{'|'.join(sorted(sel_labels))}_{_bw_tag}"
             if _rk not in st.session_state:
                 with st.spinner("Building roster PDF…"):
                     st.session_state[_rk] = _gen_roster_pdf(
-                        data, course_filter, report_type_filter
+                        data, course_filter, report_type_filter, bw=roster_bw
                     )
             _slug = (
                 "all"            if not report_type_filter
                 else "assessment"    if "assessment" in report_type_filter.lower()
                 else "reassessment"
             )
+            _bw_suffix = "_bw" if roster_bw else ""
             st.markdown('<p class="fn-label">Save as</p>', unsafe_allow_html=True)
             roster_fn = st.text_input(
-                "Roster filename", value=f"{stem_default}_{_slug}_roster",
+                "Roster filename",
+                value=f"{stem_default}_{_slug}_roster{_bw_suffix}",
                 key="fn_roster", label_visibility="collapsed",
             )
             st.download_button(
@@ -599,14 +611,23 @@ with st.container(border=True):
             'and full unit breakdown.</p>',
             unsafe_allow_html=True,
         )
-        _sk = "_cache_summary"
+
+        summary_bw = st.radio(
+            "Colour mode",
+            ["🎨  Colour", "🖨️  B&W / Print"],
+            horizontal=True, key="summary_bw",
+        ) == "🖨️  B&W / Print"
+
+        _bw_tag = "bw" if summary_bw else "col"
+        _sk = f"_cache_summary_{_bw_tag}"
         if _sk not in st.session_state:
             with st.spinner("Building summary PDF…"):
-                st.session_state[_sk] = _gen_summary_pdf(data)
+                st.session_state[_sk] = _gen_summary_pdf(data, bw=summary_bw)
 
+        _bw_suffix = "_bw" if summary_bw else ""
         st.markdown('<p class="fn-label">Save as</p>', unsafe_allow_html=True)
         summary_fn = st.text_input(
-            "Summary filename", value=f"{stem_default}_summary",
+            "Summary filename", value=f"{stem_default}_summary{_bw_suffix}",
             key="fn_summary", label_visibility="collapsed",
         )
         st.download_button(
