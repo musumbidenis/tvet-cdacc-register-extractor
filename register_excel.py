@@ -371,7 +371,7 @@ def build_workbook(data, path):
     sm.cell(row=r, column=1, value="Unique candidates").font      = LABEL_FONT
     sm.cell(row=r, column=1).alignment                            = MID_LEFT
     sm.cell(row=r, column=2,
-            value=f"=COUNTA('{roster_name}'!A{rs_first}:A1048576)").font = BASE_FONT
+            value=f"=COUNTA('{roster_name}'!B{rs_first}:B1048576)").font = BASE_FONT
     sm.cell(row=r, column=2).alignment                            = MID_LEFT
     r += 2
 
@@ -392,10 +392,11 @@ def build_workbook(data, path):
         if is_multi:
             # Course group separator row (merged A:D, highlighted)
             sm.row_dimensions[r].height = ROW_H
-            grp_label = f"{cname}  –  Level {clevel}" if clevel else cname
+            lvl_part  = clevel if clevel.strip().lower().startswith("level") else f"Level {clevel}"
+            grp_label = f"{cname}  –  {lvl_part}" if clevel else cname
             gc = sm.cell(row=r, column=1, value=grp_label)
             gc.font      = LABEL_FONT
-            gc.alignment = MID_LEFT
+            gc.alignment = MID_CENTER
             gc.fill      = COURSE_GRP_FILL
             sm.merge_cells(f"A{r}:D{r}")
             for c in range(1, 5):
