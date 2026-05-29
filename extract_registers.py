@@ -60,7 +60,14 @@ REPORT_RE = re.compile(r"Report Type:\s*(.+)", re.I)
 CENTRE_RE = re.compile(r"CENTRE NAME\s*:\s*(.+?)\s*(?:CENTRE CODE\s*:\s*(\S+))?\s*$", re.I)
 CENTRE_CODE_RE = re.compile(r"CENTRE CODE\s*:\s*(\S+)", re.I)
 COURSE_RE = re.compile(r"COURSE NAME\s*:\s*(.+?)\s+COURSE LEVEL\s*:\s*(.+?)\s*$", re.I)
+# One-line format: UNIT NAME : ... UNIT CODE :CODE
 UNIT_RE = re.compile(r"UNIT NAME\s*:\s*(.+?)\s+UNIT CODE\s*:\s*(\S+)\s*$", re.I)
+# Two-line format: "UNIT NAME : ... UNIT CODE" (code value follows on next line)
+UNIT_NAME_SPLIT_RE = re.compile(r"UNIT NAME\s*:\s*(.+?)\s+UNIT CODE\s*$", re.I)
+# Code-only line that follows a split unit header: ":IT/OS/ICT/BC/3/5"
+SOLO_CODE_RE = re.compile(r"^:(\S+)\s*$")
+# "text :CODE" — used for centre/unit continuation lines that carry a code value
+INLINE_CODE_RE = re.compile(r"^(.+?)\s+:(\S+)\s*$")
 TABLE_HDR_RE = re.compile(r"^\s*S/N\b", re.I)
 
 # Lines that are structural noise and must never be treated as name wraps.
@@ -120,7 +127,10 @@ def extract(pdf_path, on_log=None, on_progress=None):
     current_unit = None             # the unit currently receiving rows
     expect_wrap = False             # between UNIT NAME and S/N → unit-name continuation
     expect_centre_wrap = False      # after CENTRE NAME line → centre-name continuation
+    expect_centre_code = False      # centre code value is on the continuation line
     expect_course_wrap = False      # after COURSE NAME line → course-name continuation
+    expect_unit_code = False        # unit code value is on the next line
+    _pending_unit_name = ""         # accumulated unit name while waiting for its code
 
     def get_unit(code, name):
         if code not in units:
@@ -149,6 +159,40 @@ def extract(pdf_path, on_log=None, on_progress=None):
                 if not stripped:
                     continue
 
+                # --- pending unit code (two-line header format) -------------
+                # Line follows "UNIT NAME : ... UNIT CODE" with code value here.
+                # Two sub-formats:
+                #   ":IT/OS/ICT/BC/3/5"           (code alone)
+                #   "Health Practices :IT/OS/BC/7" (name wrap + code)
+                if expect_unit_code:
+                    ms = SOLO_CODE_RE.match(stripped)
+                    mi = INLINE_CODE_RE.match(stripped)
+                    if ms:
+                        code = ms.group(1)
+                        name = _pending_unit_name
+                        is_new = code not in units
+                        current_unit = get_unit(code, name)
+                        expect_unit_code = False
+                        if is_new:
+                            _log("found", f"Unit found: {code}  —  {name[:55]}")
+                    elif mi:
+                        _pending_unit_name = (
+                            _pending_unit_name + " " + mi.group(1)
+                        ).strip()
+                        code = mi.group(2)
+                        name = _pending_unit_name
+                        is_new = code not in units
+                        current_unit = get_unit(code, name)
+                        expect_unit_code = False
+                        if is_new:
+                            _log("found", f"Unit found: {code}  —  {name[:55]}")
+                    else:
+                        # Still waiting — accumulate more name text
+                        _pending_unit_name = (
+                            _pending_unit_name + " " + stripped
+                        ).strip()
+                    continue
+
                 # --- candidate row? (check first: most common line) ---------
                 m = ROW_RE.match(line)
                 if m and current_unit is not None:
@@ -175,13 +219,22 @@ def extract(pdf_path, on_log=None, on_progress=None):
                     continue
 
                 if (mm := CENTRE_RE.match(stripped)):
-                    state["centre_name"] = mm.group(1).strip()
-                    if mm.group(2):
-                        state["centre_code"] = mm.group(2).strip()
-                    elif (cc := CENTRE_CODE_RE.search(stripped)):
-                        state["centre_code"] = cc.group(1).strip()
-                    # Centre name may overflow to the next line —
-                    # flag it so the continuation can be appended.
+                    captured = mm.group(1).strip()
+                    code_val = mm.group(2)
+                    if code_val:
+                        # Old one-line format: code on same line
+                        state["centre_name"] = captured
+                        state["centre_code"] = code_val.strip()
+                        expect_centre_code = False
+                    elif re.search(r'\bCENTRE\s+CODE\s*$', captured, re.I):
+                        # New format: "CENTRE CODE" label at end, value on next line
+                        state["centre_name"] = re.sub(
+                            r'\s*\bCENTRE\s+CODE\s*$', '', captured, flags=re.I
+                        ).strip()
+                        expect_centre_code = True
+                    else:
+                        state["centre_name"] = captured
+                        expect_centre_code = False
                     expect_centre_wrap = True
                     expect_course_wrap = False
                     continue
@@ -195,17 +248,28 @@ def extract(pdf_path, on_log=None, on_progress=None):
                     continue
 
                 if (mm := UNIT_RE.match(stripped)):
+                    # One-line format: UNIT NAME : ... UNIT CODE :CODE
                     code = mm.group(2).strip()
                     name = re.sub(r"\s+", " ", mm.group(1).strip())
                     is_new = code not in units
                     current_unit = get_unit(code, name)
                     expect_centre_wrap = False
                     expect_course_wrap = False
+                    expect_unit_code = False
                     # Only a freshly-seen unit may still need its wrapped name
                     # continuation; repeated headers on continuation pages must not.
                     expect_wrap = is_new
                     if is_new:
                         _log("found", f"Unit found: {code}  —  {name[:55]}")
+                    continue
+
+                if (mm := UNIT_NAME_SPLIT_RE.match(stripped)):
+                    # Two-line format: "UNIT NAME : ... UNIT CODE" — code follows
+                    _pending_unit_name = re.sub(r"\s+", " ", mm.group(1).strip())
+                    expect_unit_code = True
+                    expect_centre_wrap = False
+                    expect_course_wrap = False
+                    expect_wrap = False
                     continue
 
                 if TABLE_HDR_RE.match(stripped):
@@ -215,23 +279,62 @@ def extract(pdf_path, on_log=None, on_progress=None):
                     continue
 
                 # --- centre-name continuation --------------------------------
-                # e.g. "SCIENCE AND TECHNOLOGY(RVIST)" after the truncated
-                # "CENTRE NAME: RIFT VALLEY INSTITUTE OF  CENTRE CODE :XXXXX"
+                # e.g. "SCIENCE AND TECHNOLOGY(RVIST) :0320134P" after the
+                # truncated "CENTRE NAME: RIFT VALLEY INSTITUTE OF  CENTRE CODE"
                 if expect_centre_wrap and not NOISE_RE.search(stripped):
-                    state["centre_name"] = (
-                        state["centre_name"] + " " + stripped
-                    ).strip()
+                    if expect_centre_code:
+                        # Line carries both the name tail and the centre code
+                        # Format: "NAME_CONT :CODE"
+                        mc = INLINE_CODE_RE.match(stripped)
+                        if mc:
+                            state["centre_name"] = (
+                                state["centre_name"] + " " + mc.group(1)
+                            ).strip()
+                            state["centre_code"] = mc.group(2).strip()
+                        else:
+                            state["centre_name"] = (
+                                state["centre_name"] + " " + stripped
+                            ).strip()
+                        expect_centre_code = False
+                    else:
+                        state["centre_name"] = (
+                            state["centre_name"] + " " + stripped
+                        ).strip()
                     expect_centre_wrap = False
                     continue
 
                 # --- course-name continuation --------------------------------
-                # e.g. "Technology" after the truncated
-                # "COURSE NAME : Information and Communication  COURSE LEVEL :Level 5"
+                # e.g. "Technology (ICT) 5" after the truncated
+                # "COURSE NAME : Information and Communication  COURSE LEVEL :Level"
+                # When course_level was captured as just "Level" (no number yet),
+                # the continuation line may carry both the name tail AND the level
+                # digit (they sit on the same visual row in the new PDF layout).
                 if expect_course_wrap and not NOISE_RE.search(stripped):
-                    state["course_name"] = (
-                        state["course_name"] + " " + stripped
-                    ).strip()
-                    expect_course_wrap = False
+                    lvl = (state["course_level"] or "").strip()
+                    if lvl.lower() == "level":
+                        # Try to peel a trailing level number off the line
+                        m_combo = re.match(r'^(.+?)\s+(\d+)\s*$', stripped)
+                        if m_combo:
+                            state["course_name"] = (
+                                state["course_name"] + " " + m_combo.group(1)
+                            ).strip()
+                            state["course_level"] = "Level " + m_combo.group(2)
+                            expect_course_wrap = False
+                        elif re.match(r'^\d+\s*$', stripped):
+                            # Level number arrived alone on its own line
+                            state["course_level"] = "Level " + stripped.strip()
+                            expect_course_wrap = False
+                        else:
+                            # Name still wrapping; level number not yet seen
+                            state["course_name"] = (
+                                state["course_name"] + " " + stripped
+                            ).strip()
+                            # keep expect_course_wrap True — level digit may follow
+                    else:
+                        state["course_name"] = (
+                            state["course_name"] + " " + stripped
+                        ).strip()
+                        expect_course_wrap = False
                     continue
 
                 # --- unit-name continuation (e.g. the lone word "Systems") --
