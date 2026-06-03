@@ -99,6 +99,48 @@ def page_lines(page, y_tol=3):
     return lines
 
 
+def _candidate_rows_from_tables(page):
+    """Yield (sn, name, reg_no) for every candidate row in the page's tables.
+
+    The candidate list is a ruled table, so reading cell contents directly is
+    robust: a row is captured even when the name and registration number render
+    with no separating space (which makes the flat text line "<name><reg>"
+    unparseable by ROW_RE — e.g. "Wafula Agatha Nakhumica0320134P/ICT/6/2025/067").
+    The column boundary splits the glued glyphs back into their own cells.
+
+    Only rows whose cells contain a registration number are returned, so the
+    table header, the signature/footer table and the centre/course/unit header
+    block are all ignored automatically.
+    """
+    try:
+        tables = page.extract_tables({
+            "vertical_strategy":   "lines",
+            "horizontal_strategy": "lines",
+        })
+    except Exception:
+        return
+    for tbl in tables or []:
+        for raw in tbl:
+            cells = [(c or "").strip() for c in raw]
+            reg = reg_idx = None
+            mm = None
+            for i, c in enumerate(cells):
+                mm = REG_RE.search(c)
+                if mm:
+                    reg, reg_idx = mm.group(0), i
+                    break
+            if reg is None:
+                continue
+            left = cells[:reg_idx]
+            sn = next((int(c) for c in left if re.fullmatch(r"\d{1,4}", c)), None)
+            name_parts = [c for c in left if c and not re.fullmatch(r"\d{1,4}", c)]
+            name = re.sub(r"\s+", " ", " ".join(name_parts)).strip()
+            if not name:
+                # name glyphs spilled into the reg cell ("Nakhumica0320134P/...")
+                name = re.sub(r"\s+", " ", cells[reg_idx][:mm.start()]).strip()
+            yield sn, name, reg
+
+
 # --------------------------------------------------------------------------- #
 # Parsing
 # --------------------------------------------------------------------------- #
@@ -344,10 +386,32 @@ def extract(pdf_path, on_log=None, on_progress=None):
                     ).strip()
                     continue
 
+            # --- table-based candidate capture (authoritative) ----------
+            # Read the ruled candidate table directly so no row is dropped
+            # for a formatting quirk. New regs (deduped) are merged into the
+            # unit identified from this page's header text above.
+            if current_unit is not None:
+                recovered = 0
+                for sn, name, reg in _candidate_rows_from_tables(page):
+                    if reg in current_unit["_reg_seen"]:
+                        continue
+                    current_unit["_reg_seen"].add(reg)
+                    current_unit["candidates"].append(
+                        {"sn": sn, "name": name, "reg_no": reg}
+                    )
+                    recovered += 1
+                if recovered:
+                    _log("found",
+                         f"Table recovered {recovered} row(s) the text parser "
+                         f"missed on page {pg_idx}")
+
     # tidy up internal bookkeeping
     result_units = []
     for u in units.values():
         u.pop("_reg_seen", None)
+        # Order by serial so table-recovered rows slot into their true place,
+        # not at the end where they were appended (None serials sort last).
+        u["candidates"].sort(key=lambda c: (c["sn"] is None, c["sn"] or 0))
         u["candidate_count"] = len(u["candidates"])
         result_units.append(u)
 
